@@ -9,9 +9,13 @@ https://www.katacoda.com/courses/kubernetes/getting-started-with-kubeadm
 - Download below files
 
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/kubemon.yaml
+
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/kubelog.yaml
+
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/loki.yaml
+
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/loki-ds.json
+
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/pod-monitoring.json
 
 - Install monitoring
