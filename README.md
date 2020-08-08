@@ -18,6 +18,8 @@ wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/loki-d
 
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/pod-monitoring.json
 
+wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/kube-monitoring-overview.json
+
 - Install monitoring
 
 ```
@@ -38,5 +40,6 @@ kubectl create -f kubelog.yaml -n logging
 ```
 HIP=`ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1`
 curl -vvv http://admin:bappa2675@$HIP:30000/api/dashboards/db -X POST -d @pod-monitoring.json -H 'Content-Type: application/json'
+curl -vvv http://admin:bappa2675@$HIP:30000/api/dashboards/db -X POST -d @kube-monitoring-overview.json -H 'Content-Type: application/json'
 curl -vvv http://admin:bappa2675@$HIP:30000/api/datasources -X POST -d @loki-ds.json -H 'Content-Type: application/json' 
 ```
