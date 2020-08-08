@@ -7,9 +7,9 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kube-cluster-monitoring-alertmanager-config
+  name: kubemon-alertmanager-config
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: alertmanager
 data:
   alertmanager.yml: |-
@@ -54,9 +54,9 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kube-cluster-monitoring-alertmanager-operated
+  name: kubemon-alertmanager-operated
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: alertmanager
 spec:
   type: "ClusterIP"
@@ -78,10 +78,10 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kube-cluster-monitoring-alertmanager
+  name: kubemon-alertmanager
   labels:
     k8s-app: alertmanager
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: alertmanager
 spec:
   type: NodePort
@@ -99,15 +99,15 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: kube-cluster-monitoring-alertmanager
+  name: kubemon-alertmanager
   labels: &Labels
     k8s-app: alertmanager
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: alertmanager
 spec:
   # Used to configure a stable network identity for the StatefulSet Pods 
-  # e.g. pod_name.kube-cluster-monitoring-alertmanager-operated.monitoring.svc:6783
-  serviceName: "kube-cluster-monitoring-alertmanager-operated"
+  # e.g. pod_name.kubemon-alertmanager-operated.monitoring.svc:6783
+  serviceName: "kubemon-alertmanager-operated"
   # To scale the number of Alertmanager replicas, you must add `—cluster.peer` addresses 
   # for any additional Alertmanager Pods in the `args` section of the `containers` spec. 
   replicas: 1
@@ -133,8 +133,8 @@ spec:
             - --web.listen-address=:9093
             - --web.route-prefix=/
             - --cluster.listen-address=$(POD_IP):6783
-            - --cluster.peer=kube-cluster-monitoring-alertmanager-0.kube-cluster-monitoring-alertmanager-operated.monitoring.svc:6783
-            - --cluster.peer=kube-cluster-monitoring-alertmanager-1.kube-cluster-monitoring-alertmanager-operated.monitoring.svc:6783            
+            - --cluster.peer=kubemon-alertmanager-0.kubemon-alertmanager-operated.monitoring.svc:6783
+            - --cluster.peer=kubemon-alertmanager-1.kubemon-alertmanager-operated.monitoring.svc:6783
             - --log.level=debug
           env:
           - name: POD_IP
@@ -161,7 +161,7 @@ spec:
             # consult https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/#populate-a-volume-with-data-stored-in-a-configmap
             - name: config-volume
               mountPath: /etc/config
-            - name: kube-cluster-monitoring-alertmanager-data
+            - name: kubemon-alertmanager-data
               mountPath: "/data"
               subPath: ""
           resources:
@@ -177,19 +177,17 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: kube-cluster-monitoring-alertmanager-config
-        - name: kube-cluster-monitoring-alertmanager-data
+            name: kubemon-alertmanager-config
+        - name: kubemon-alertmanager-data
           emptyDir: {}
-
 ---
-
 apiVersion: v1
 kind: ConfigMap
 metadata:
   creationTimestamp: null
-  name: kube-cluster-monitoring-dashboards
+  name: kubemon-dashboards
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: grafana
 data:
   # JSON dashboards stored as ConfigMap values, where the ConfigMap key is the name of the dashboard file
@@ -219,13 +217,12 @@ kind: ServiceAccount
 metadata:
   name: grafana
 ---
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kube-cluster-monitoring-grafana-ini
+  name: kubemon-grafana-ini
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: grafana
 data:
   # Grafana's main configuration file. To learn more about the configuration options available to you, 
@@ -245,9 +242,9 @@ data:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kube-cluster-monitoring-grafana-datasources
+  name: kubemon-grafana-datasources
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
 data:
   # A file that specifies data sources for Grafana to use to populate dashboards. 
   # To learn more about configuring this, consult https://grafana.com/docs/administration/provisioning/#datasources
@@ -256,17 +253,17 @@ data:
     datasources:
     - access: proxy
       isDefault: true
-      name: Prometheus
+      name: prometheus
       type: prometheus
-      url: http://kube-cluster-monitoring-prometheus:9090
+      url: http://kubemon-prometheus:9090
       version: 1
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kube-cluster-monitoring-grafana-dashboardproviders
+  name: kubemon-grafana-dashboardproviders
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
 data:
   # A file that configures where Grafana should look for dashboards to load when starting up. 
   # To learn more, consult https://grafana.com/docs/administration/provisioning/#dashboards
@@ -286,23 +283,23 @@ data:
 apiVersion: v1
 kind: Secret
 metadata:
-  name: kube-cluster-monitoring-grafana
+  name: kubemon-grafana
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: grafana
 type: Opaque
 data:
   # By default, admin-user is set to `admin`
   admin-user: YWRtaW4=
-  admin-password: "YmFwcGEyNjc1"
+  admin-password: "YWRtaW4yNjc1"
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: kube-cluster-monitoring-grafana
+  name: kubemon-grafana
   labels:
     k8s-app: grafana
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: grafana
 spec:
   type: NodePort
@@ -319,13 +316,13 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: kube-cluster-monitoring-grafana
+  name: kubemon-grafana
   labels: &Labels
     k8s-app: grafana
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: grafana
 spec:
-  serviceName: kube-cluster-monitoring-grafana
+  serviceName: kubemon-grafana
   replicas: 1
   selector:
     matchLabels: *Labels
@@ -344,13 +341,14 @@ spec:
             imagePullPolicy: "IfNotPresent"
             command: ["chmod", "777", "/var/lib/grafana"]
             volumeMounts:
-            - name: kube-cluster-monitoring-grafana-data
+            - name: kubemon-grafana-data
               mountPath: "/var/lib/grafana"
       containers:
         - name: grafana
           # The main Grafana container, which uses the `grafana/grafana:6.0.1` image 
           # from https://hub.docker.com/r/grafana/grafana
-          image: grafana/grafana:6.6.2
+          #image: grafana/grafana:6.0.1
+          image: grafana/grafana
           imagePullPolicy: Always
           # Mount in all the previously defined ConfigMaps as `volumeMounts`
           # as well as the Grafana data volume
@@ -363,7 +361,7 @@ spec:
               mountPath: "/etc/grafana/provisioning/datasources/"
             - name: dashboardproviders
               mountPath: "/etc/grafana/provisioning/dashboards/"
-            - name: kube-cluster-monitoring-grafana-data
+            - name: kubemon-grafana-data
               mountPath: "/var/lib/grafana"
           ports:
             - name: service
@@ -378,12 +376,12 @@ spec:
             - name: GF_SECURITY_ADMIN_USER
               valueFrom:
                 secretKeyRef:
-                  name: kube-cluster-monitoring-grafana
+                  name: kubemon-grafana
                   key: admin-user
             - name: GF_SECURITY_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: kube-cluster-monitoring-grafana
+                  name: kubemon-grafana
                   key: admin-password
           # Define a liveness and readiness probe that will hit `/api/health` using port `3000`. 
           # To learn more about Liveness and Readiness Probes, 
@@ -414,17 +412,17 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: kube-cluster-monitoring-grafana-ini
+            name: kubemon-grafana-ini
         - name: datasources
           configMap:
-            name: kube-cluster-monitoring-grafana-datasources
+            name: kubemon-grafana-datasources
         - name: dashboardproviders
           configMap:
-            name: kube-cluster-monitoring-grafana-dashboardproviders
+            name: kubemon-grafana-dashboardproviders
         - name: dashboards
           configMap:
-            name: kube-cluster-monitoring-dashboards
-        - name: kube-cluster-monitoring-grafana-data
+            name: kubemon-dashboards
+        - name: kubemon-grafana-data
           emptyDir: {}
 ---
 apiVersion: v1
@@ -493,10 +491,10 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kube-cluster-monitoring-kube-state-metrics
+  name: kubemon-kube-state-metrics
   labels:
     k8s-app: kube-state-metrics
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: kube-state-metrics
 spec:
   selector:
@@ -512,7 +510,8 @@ spec:
       containers:
       - name: kube-state-metrics
         # Use the `quay.io/coreos/kube-state-metrics:v1.5.0` container image
-        image: quay.io/coreos/kube-state-metrics:v1.5.0
+        #image: quay.io/coreos/kube-state-metrics:v1.5.0
+        image: quay.io/coreos/kube-state-metrics:v1.9.6
         imagePullPolicy: Always
         ports:
         # `8080` is used to scrape Kubernetes object state metrics
@@ -556,15 +555,15 @@ spec:
           - --memory=100Mi
           - --extra-memory=2Mi
           - --threshold=5
-          - --deployment=kube-cluster-monitoring-kube-state-metrics
+          - --deployment=kubemon-kube-state-metrics
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: kube-cluster-monitoring-kube-state-metrics
+  name: kubemon-kube-state-metrics
   labels:
     k8s-app: kube-state-metrics
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: kube-state-metrics
 spec:
   ports:
@@ -588,10 +587,10 @@ metadata:
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: kube-cluster-monitoring-node-exporter
+  name: kubemon-node-exporter
   labels:
     k8s-app: node-exporter
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: node-exporter
 spec:
   updateStrategy:
@@ -608,7 +607,8 @@ spec:
       containers:
         - name: prometheus-node-exporter
           # Use the `quay.io/prometheus/node-exporter:v0.17.0` image
-          image: quay.io/prometheus/node-exporter:v0.17.0
+          #image: quay.io/prometheus/node-exporter:v0.17.0
+          image: quay.io/prometheus/node-exporter:v0.18.1
           imagePullPolicy: Always
           args:
             - --path.procfs=/host/proc
@@ -692,11 +692,12 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   creationTimestamp: null
-  name: kube-cluster-monitoring-prometheus-config
+  name: kubemon-prometheus-config
   labels:
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: prometheus
 data:
+  # If you'd like to add your own alerts or modify existing alerts, you can edit this ConfigMap value.
   alerts.yaml: |-
     "groups": 
     - name: apps-rules
@@ -1691,45 +1692,6 @@ data:
         target_label: pod
         replacement: $1
         action: replace
-    - job_name: cadvisor
-      honor_timestamps: true
-      scrape_interval: 15s
-      scrape_timeout: 10s
-      metrics_path: /metrics
-      scheme: https
-      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      tls_config:
-        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        insecure_skip_verify: true
-      kubernetes_sd_configs:
-      - role: node
-      relabel_configs:
-      - separator: ;
-        regex: __meta_kubernetes_node_label_(.+)
-        replacement: $1
-        action: labelmap
-      - source_labels: [__address__]
-        separator: ;
-        regex: ([^:]+)(?::\d+)?
-        target_label: __address__
-        replacement: $1:10250
-        action: replace
-      - separator: ;
-        regex: (.*)
-        target_label: __metrics_path__
-        replacement: /metrics/cadvisor
-        action: replace
-      metric_relabel_configs:
-      - source_labels: [namespace]
-        separator: ;
-        regex: ^$
-        replacement: $1
-        action: drop
-      - source_labels: [pod_name]
-        separator: ;
-        regex: ^$
-        replacement: $1
-        action: drop
     - job_name: apiserver
       honor_timestamps: true
       scrape_interval: 15s
@@ -1775,29 +1737,6 @@ data:
         regex: monitoring;kube-state-metrics
         replacement: $1
         action: keep
-    - job_name: kubelet
-      honor_timestamps: true
-      scrape_interval: 15s
-      scrape_timeout: 10s
-      metrics_path: /metrics
-      scheme: https
-      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-      tls_config:
-        ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-        insecure_skip_verify: true
-      kubernetes_sd_configs:
-      - role: node
-      relabel_configs:
-      - separator: ;
-        regex: __meta_kubernetes_node_label_(.+)
-        replacement: $1
-        action: labelmap
-      - source_labels: [__address__]
-        separator: ;
-        regex: ([^:]+)(?::\d+)?
-        target_label: __address__
-        replacement: $1:10250
-        action: replace
     - job_name: node-exporter
       honor_timestamps: true
       scrape_interval: 15s
@@ -1882,14 +1821,219 @@ data:
         target_label: instance
         replacement: $1
         action: replace
+    - job_name: kubelet
+      honor_labels: true
+      honor_timestamps: true
+      scrape_interval: 30s
+      scrape_timeout: 30s
+      metrics_path: /metrics
+      scheme: https
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - kube-system
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tls_config:
+        insecure_skip_verify: true
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_label_k8s_app]
+        separator: ;
+        regex: kubelet
+        replacement: $1
+        action: keep
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        separator: ;
+        regex: https-metrics
+        replacement: $1
+        action: keep
+      - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+        separator: ;
+        regex: Node;(.*)
+        target_label: node
+        replacement: ${1}
+        action: replace
+      - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+        separator: ;
+        regex: Pod;(.*)
+        target_label: pod
+        replacement: ${1}
+        action: replace
+      - source_labels: [__meta_kubernetes_namespace]
+        separator: ;
+        regex: (.*)
+        target_label: namespace
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_service_name]
+        separator: ;
+        regex: (.*)
+        target_label: service
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_pod_name]
+        separator: ;
+        regex: (.*)
+        target_label: pod
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_service_name]
+        separator: ;
+        regex: (.*)
+        target_label: job
+        replacement: ${1}
+        action: replace
+      - source_labels: [__meta_kubernetes_service_label_k8s_app]
+        separator: ;
+        regex: (.+)
+        target_label: job
+        replacement: ${1}
+        action: replace
+      - separator: ;
+        regex: (.*)
+        target_label: endpoint
+        replacement: https-metrics
+        action: replace
+      - source_labels: [__metrics_path__]
+        separator: ;
+        regex: (.*)
+        target_label: metrics_path
+        replacement: $1
+        action: replace
+      metric_relabel_configs:
+      - source_labels: [__name__]
+        separator: ;
+        regex: kubelet_(pod_worker_latency_microseconds|pod_start_latency_microseconds|cgroup_manager_latency_microseconds|pod_worker_start_latency_microseconds|pleg_relist_latency_microseconds|pleg_relist_interval_microseconds|runtime_operations|runtime_operations_latency_microseconds|runtime_operations_errors|eviction_stats_age_microseconds|device_plugin_registration_count|device_plugin_alloc_latency_microseconds|network_plugin_operations_latency_microseconds)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: scheduler_(e2e_scheduling_latency_microseconds|scheduling_algorithm_predicate_evaluation|scheduling_algorithm_priority_evaluation|scheduling_algorithm_preemption_evaluation|scheduling_algorithm_latency_microseconds|binding_latency_microseconds|scheduling_latency_seconds)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: apiserver_(request_count|request_latencies|request_latencies_summary|dropped_requests|storage_data_key_generation_latencies_microseconds|storage_transformation_failures_total|storage_transformation_latencies_microseconds|proxy_tunnel_sync_latency_secs)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: kubelet_docker_(operations|operations_latency_microseconds|operations_errors|operations_timeout)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: reflector_(items_per_list|items_per_watch|list_duration_seconds|lists_total|short_watches_total|watch_duration_seconds|watches_total)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: etcd_(helper_cache_hit_count|helper_cache_miss_count|helper_cache_entry_count|request_cache_get_latencies_summary|request_cache_add_latencies_summary|request_latencies_summary)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: transformation_(transformation_latencies_microseconds|failures_total)
+        replacement: $1
+        action: drop
+      - source_labels: [__name__]
+        separator: ;
+        regex: (admission_quota_controller_adds|crd_autoregistration_controller_work_duration|APIServiceOpenAPIAggregationControllerQueue1_adds|AvailableConditionController_retries|crd_openapi_controller_unfinished_work_seconds|APIServiceRegistrationController_retries|admission_quota_controller_longest_running_processor_microseconds|crdEstablishing_longest_running_processor_microseconds|crdEstablishing_unfinished_work_seconds|crd_openapi_controller_adds|crd_autoregistration_controller_retries|crd_finalizer_queue_latency|AvailableConditionController_work_duration|non_structural_schema_condition_controller_depth|crd_autoregistration_controller_unfinished_work_seconds|AvailableConditionController_adds|DiscoveryController_longest_running_processor_microseconds|autoregister_queue_latency|crd_autoregistration_controller_adds|non_structural_schema_condition_controller_work_duration|APIServiceRegistrationController_adds|crd_finalizer_work_duration|crd_naming_condition_controller_unfinished_work_seconds|crd_openapi_controller_longest_running_processor_microseconds|DiscoveryController_adds|crd_autoregistration_controller_longest_running_processor_microseconds|autoregister_unfinished_work_seconds|crd_naming_condition_controller_queue_latency|crd_naming_condition_controller_retries|non_structural_schema_condition_controller_queue_latency|crd_naming_condition_controller_depth|AvailableConditionController_longest_running_processor_microseconds|crdEstablishing_depth|crd_finalizer_longest_running_processor_microseconds|crd_naming_condition_controller_adds|APIServiceOpenAPIAggregationControllerQueue1_longest_running_processor_microseconds|DiscoveryController_queue_latency|DiscoveryController_unfinished_work_seconds|crd_openapi_controller_depth|APIServiceOpenAPIAggregationControllerQueue1_queue_latency|APIServiceOpenAPIAggregationControllerQueue1_unfinished_work_seconds|DiscoveryController_work_duration|autoregister_adds|crd_autoregistration_controller_queue_latency|crd_finalizer_retries|AvailableConditionController_unfinished_work_seconds|autoregister_longest_running_processor_microseconds|non_structural_schema_condition_controller_unfinished_work_seconds|APIServiceOpenAPIAggregationControllerQueue1_depth|AvailableConditionController_depth|DiscoveryController_retries|admission_quota_controller_depth|crdEstablishing_adds|APIServiceOpenAPIAggregationControllerQueue1_retries|crdEstablishing_queue_latency|non_structural_schema_condition_controller_longest_running_processor_microseconds|autoregister_work_duration|crd_openapi_controller_retries|APIServiceRegistrationController_work_duration|crdEstablishing_work_duration|crd_finalizer_adds|crd_finalizer_depth|crd_openapi_controller_queue_latency|APIServiceOpenAPIAggregationControllerQueue1_work_duration|APIServiceRegistrationController_queue_latency|crd_autoregistration_controller_depth|AvailableConditionController_queue_latency|admission_quota_controller_queue_latency|crd_naming_condition_controller_work_duration|crd_openapi_controller_work_duration|DiscoveryController_depth|crd_naming_condition_controller_longest_running_processor_microseconds|APIServiceRegistrationController_depth|APIServiceRegistrationController_longest_running_processor_microseconds|crd_finalizer_unfinished_work_seconds|crdEstablishing_retries|admission_quota_controller_unfinished_work_seconds|non_structural_schema_condition_controller_adds|APIServiceRegistrationController_unfinished_work_seconds|admission_quota_controller_work_duration|autoregister_depth|autoregister_retries|kubeproxy_sync_proxy_rules_latency_microseconds|rest_client_request_latency_seconds|non_structural_schema_condition_controller_retries)
+        replacement: $1
+        action: drop
+    - job_name: cadvisor
+      honor_labels: true
+      honor_timestamps: true
+      scrape_interval: 30s
+      scrape_timeout: 30s
+      metrics_path: /metrics/cadvisor
+      scheme: https
+      kubernetes_sd_configs:
+      - role: endpoints
+        namespaces:
+          names:
+          - kube-system
+      bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tls_config:
+        insecure_skip_verify: true
+      relabel_configs:
+      - source_labels: [__meta_kubernetes_service_label_k8s_app]
+        separator: ;
+        regex: kubelet
+        replacement: $1
+        action: keep
+      - source_labels: [__meta_kubernetes_endpoint_port_name]
+        separator: ;
+        regex: https-metrics
+        replacement: $1
+        action: keep
+      - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+        separator: ;
+        regex: Node;(.*)
+        target_label: node
+        replacement: ${1}
+        action: replace
+      - source_labels: [__meta_kubernetes_endpoint_address_target_kind, __meta_kubernetes_endpoint_address_target_name]
+        separator: ;
+        regex: Pod;(.*)
+        target_label: pod
+        replacement: ${1}
+        action: replace
+      - source_labels: [__meta_kubernetes_namespace]
+        separator: ;
+        regex: (.*)
+        target_label: namespace
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_service_name]
+        separator: ;
+        regex: (.*)
+        target_label: service
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_pod_name]
+        separator: ;
+        regex: (.*)
+        target_label: pod
+        replacement: $1
+        action: replace
+      - source_labels: [__meta_kubernetes_service_name]
+        separator: ;
+        regex: (.*)
+        target_label: job
+        replacement: ${1}
+        action: replace
+      - source_labels: [__meta_kubernetes_service_label_k8s_app]
+        separator: ;
+        regex: (.+)
+        target_label: job
+        replacement: ${1}
+        action: replace
+      - separator: ;
+        regex: (.*)
+        target_label: endpoint
+        replacement: https-metrics
+        action: replace
+      - source_labels: [__metrics_path__]
+        separator: ;
+        regex: (.*)
+        target_label: metrics_path
+        replacement: $1
+        action: replace
+      metric_relabel_configs:
+      - source_labels: [__name__]
+        separator: ;
+        regex: container_(network_tcp_usage_total|network_udp_usage_total|tasks_state|cpu_load_average_10s)
+        replacement: $1
+        action: drop
 ---
 kind: Service
 apiVersion: v1
 metadata:
-  name: kube-cluster-monitoring-prometheus
+  name: kubemon-prometheus
   labels:
     k8s-app: prometheus
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: prometheus
 spec:
   type: NodePort
@@ -1900,9 +2044,6 @@ spec:
       protocol: TCP
       targetPort: 9090
       nodePort: 30090
-  # Ensures clients are routed to the same Prometheus Pod, which is necessary to get consistent dashboards in a highly-available setup. 
-  # To learn more about Prometheus high availability, 
-  # consult https://github.com/coreos/prometheus-operator/blob/master/Documentation/high-availability.md#prometheus
   sessionAffinity: ClientIP
   selector:
     k8s-app: prometheus
@@ -1910,13 +2051,13 @@ spec:
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: kube-cluster-monitoring-prometheus
+  name: kubemon-prometheus
   labels: &Labels
     k8s-app: prometheus
-    app.kubernetes.io/name: kube-cluster-monitoring
+    app.kubernetes.io/name: kubemon
     app.kubernetes.io/component: prometheus
 spec:
-  serviceName: "kube-cluster-monitoring-prometheus"
+  serviceName: "kubemon-prometheus"
   replicas: 1
   podManagementPolicy: "Parallel"
   updateStrategy:
@@ -1935,20 +2076,23 @@ spec:
         imagePullPolicy: Always
         command: ["chown", "-R", "65534:65534", "/data"]
         volumeMounts:
-        - name: kube-cluster-monitoring-prometheus-data
+        - name: kubemon-prometheus-data
           mountPath: /data
           subPath: ""
       containers:
         - name: prometheus-server
-          # Use the `quay.io/prometheus/prometheus:v2.11.1` image
-          image: quay.io/prometheus/prometheus:v2.11.1
+          image: quay.io/prometheus/prometheus:v2.19.1
           imagePullPolicy: "IfNotPresent"
           args:
             - --config.file=/etc/config/prometheus.yaml
             - --storage.tsdb.path=/data
             - --web.console.libraries=/etc/prometheus/console_libraries
             - --web.console.templates=/etc/prometheus/consoles
+            - --storage.tsdb.retention.time=2d
             - --web.enable-lifecycle
+            - --storage.tsdb.no-lockfile
+            - --web.external-url=http://prometheus.apps.cloud-cafe.tk
+            - --web.route-prefix=/
           ports:
             - containerPort: 9090
           # Probe the `/-/ready` and `/-/healthy` endpoints
@@ -1973,7 +2117,7 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /etc/config
-            - name: kube-cluster-monitoring-prometheus-data
+            - name: kubemon-prometheus-data
               mountPath: /data
               subPath: ""
       terminationGracePeriodSeconds: 300
@@ -1981,6 +2125,6 @@ spec:
         # The Prometheus ConfigMap is mounted into the Pods as a volume at `/etc/config`
         - name: config-volume
           configMap:
-            name: kube-cluster-monitoring-prometheus-config
-        - name: kube-cluster-monitoring-prometheus-data
+            name: kubemon-prometheus-config
+        - name: kubemon-prometheus-data
           emptyDir: {}
