@@ -10,17 +10,17 @@ OS ```CentOS 7``` to be ready before hand to start kubernetes deployment using k
 
 On Master host run following command
 ```
-curl -LO https://raw.githubusercontent.com/prasenforu/Kube-platform/master/host-setup.sh; chmod +x ./host-setup.sh
+curl -LO https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/host-setup.sh; chmod +x ./host-setup.sh
 ./host-setup.sh master
 ```
 
 On Node host run following command
 ```
-curl -LO https://raw.githubusercontent.com/prasenforu/Kube-platform/master/host-setup.sh; chmod +x ./host-setup.sh
+curl -LO https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/host-setup.sh; chmod +x ./host-setup.sh
 ./host-setup.sh node
 ```
 
-#### Demo setup for monitring and logging.
+#### Setup for monitring and logging.
 
 - Download below files
 
