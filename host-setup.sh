@@ -233,7 +233,7 @@ chmod +x setup-helm.sh
 ./setup-helm.sh
 
 # Setup for monitring and logging
-exit
+#exit
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/kubemon.yaml
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/kubelog.yaml
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/loki.yaml
@@ -248,6 +248,11 @@ kubectl create ns logging
 kubectl create secret generic loki -n logging --from-file=loki.yaml
 kubectl create -f kubelog.yaml -n logging
 
+## Upload Grafana dashboard & loki datasource
+echo ""
+echo "Waiting for Grafana POD ready to upload dashboard & loki datasource .."
+while [[ $(kubectl get pods kubemon-grafana-0 -n monitoring -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "Waiting for Grafana pod to be ready" && sleep 1; done
+
 HIP=`ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1`
 curl -vvv http://admin:admin2675@$HIP:30000/api/dashboards/db -X POST -d @pod-monitoring.json -H 'Content-Type: application/json'
 curl -vvv http://admin:admin2675@$HIP:30000/api/dashboards/db -X POST -d @kube-monitoring-overview.json -H 'Content-Type: application/json'
@@ -257,4 +262,6 @@ curl -vvv http://admin:admin2675@$HIP:30000/api/datasources -X POST -d @loki-ds.
 # Setup Demo application
 exit
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/mongo-employee.yaml
-kubectl create -f mongo-employee.yaml
+kubectl create ns demo-mongo
+kubectl create -f mongo-employee.yaml -n demo-mongo
+
