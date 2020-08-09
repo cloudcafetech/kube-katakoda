@@ -260,7 +260,7 @@ curl -vvv http://admin:admin2675@$HIP:30000/api/dashboards/db -X POST -d @cluste
 curl -vvv http://admin:admin2675@$HIP:30000/api/datasources -X POST -d @loki-ds.json -H 'Content-Type: application/json' 
 
 # Setup Demo application
-exit
+#exit
 wget https://raw.githubusercontent.com/cloudcafetech/kube-katakoda/master/mongo-employee.yaml
 kubectl create ns demo-mongo
 kubectl create -f mongo-employee.yaml -n demo-mongo
