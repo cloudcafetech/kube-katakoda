@@ -14,7 +14,7 @@ DATE=$(date +"%d%m%y")
 TOKEN=$DATE.1a7dd4cc8d1f4cc5
 #CRI=crio
 
-if [[ "$master" == "" ]]; then
+if [[ "$master" == "" || "$master" != "master" || "$master" != "node" ]]; then
  echo "Usage: host-setup.sh <master or node>"
  echo "Example: host-setup.sh master/node"
  exit
