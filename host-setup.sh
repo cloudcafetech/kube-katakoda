@@ -2,7 +2,7 @@
 # Kubernetes host setup script for CentOS
 
 master=$1
-MASTER=10.128.0.5
+KUBEMASTER=10.128.0.5
 MinIO=10.128.0.9
 NFSRV=10.128.0.9
 NFSMOUNT=/root/nfs/nfsdata
@@ -137,9 +137,9 @@ systemctl enable kubelet; systemctl start kubelet
 
 if [[ "$master" == "node" ]]; then
   echo ""
-  echo "Waiting for Master ($MASTER) API response .."
-  while [[ $(nc $MASTER 6443 &> /dev/null) != "True" ]]; do printf '.'; sleep 2; done
-  kubeadm join --discovery-token-unsafe-skip-ca-verification --token=$TOKEN $MASTER:6443
+  echo "Waiting for Master ($KUBEMASTER) API response .."
+  while [[ $(nc $KUBEMASTER 6443 &> /dev/null) != "True" ]]; do printf '.'; sleep 2; done
+  kubeadm join --discovery-token-unsafe-skip-ca-verification --token=$TOKEN $KUBEMASTER:6443
   exit
 fi
 
