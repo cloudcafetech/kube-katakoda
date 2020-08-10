@@ -11,6 +11,7 @@ K8S_VER=$(curl -s https://storage.googleapis.com/kubernetes-release/release/stab
 CRI=docker
 velver=v1.4.2
 DATE=$(date +"%d%m%y")
+TOKEN=$DATE.1a7dd4cc8d1f4cc5
 #CRI=crio
 
 if [[ "$master" == "" ]]; then
@@ -50,7 +51,7 @@ EOF
 
 #Install some of the tools (including CRI-O, kubeadm & kubelet) we’ll need on our servers.
 
-yum install -y git curl wget bind-utils jq httpd-tools zip unzip nfs-utils go
+yum install -y git curl wget bind-utils jq httpd-tools zip unzip nfs-utils go nmap telnet
 
 if [[ $CRI != "docker" ]]
 then
@@ -135,7 +136,10 @@ systemctl enable kubelet; systemctl start kubelet
 # Setting up Kubernetes Node using Kubeadm
 
 if [[ "$master" == "node" ]]; then
-  kubeadm join --discovery-token-unsafe-skip-ca-verification --token=$DATE.1a7dd4cc8d1f4cc5 $MASTER:6443
+  echo ""
+  echo "Waiting for Master ($MASTER) API response .."
+  while [[ $(nc $MASTER 6443 &> /dev/null) != "True" ]]; do printf '.'; sleep 2; done
+  kubeadm join --discovery-token-unsafe-skip-ca-verification --token=$TOKEN $MASTER:6443
   exit
 fi
 
@@ -144,7 +148,7 @@ fi
 if [[ "$master" == "master" && $CRI != "docker" ]]; then
   kubeadm init --pod-network-cidr=10.244.0.0/16 --kubernetes-version $(kubeadm version -o short) --cri-socket "/var/run/crio/crio.sock" --ignore-preflight-errors=all 2>&1 | tee kubeadm-output.txt
 else
-  kubeadm init --token=$DATE.1a7dd4cc8d1f4cc5 --pod-network-cidr=10.244.0.0/16 --kubernetes-version $(kubeadm version -o short) --ignore-preflight-errors=all | grep -Ei "kubeadm join|discovery-token-ca-cert-hash" 2>&1 | tee kubeadm-output.txt
+  kubeadm init --token=$TOKEN --pod-network-cidr=10.244.0.0/16 --kubernetes-version $(kubeadm version -o short) --ignore-preflight-errors=all | grep -Ei "kubeadm join|discovery-token-ca-cert-hash" 2>&1 | tee kubeadm-output.txt
 fi
 
 sudo cp /etc/kubernetes/admin.conf $HOME/
@@ -251,7 +255,7 @@ kubectl create -f kubelog.yaml -n logging
 ## Upload Grafana dashboard & loki datasource
 echo ""
 echo "Waiting for Grafana POD ready to upload dashboard & loki datasource .."
-while [[ $(kubectl get pods kubemon-grafana-0 -n monitoring -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "Waiting for Grafana pod to be ready" && sleep 1; done
+while [[ $(kubectl get pods kubemon-grafana-0 -n monitoring -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do printf '.'; sleep 2; done
 
 HIP=`ip -o -4 addr list eth0 | awk '{print $4}' | cut -d/ -f1`
 curl -vvv http://admin:admin2675@$HIP:30000/api/dashboards/db -X POST -d @pod-monitoring.json -H 'Content-Type: application/json'
